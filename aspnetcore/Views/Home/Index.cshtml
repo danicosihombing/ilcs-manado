@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pengiriman</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 150vh;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .form-container {
+            background-color: #28cfdb;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(252, 248, 248, 0.993);
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+        
+
+        label {
+            font-weight: bold;
+            color: #f8f9fa;
+        }
+
+        .form-control {
+            border-radius: 5px;
+        }
+
+        
+    </style>
+    
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/smoothness/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="scrollable-container">
+        <div class="w-50 form-container mx-auto">
+            <h1 class="text-center">Formulir Pengiriman</h1>
+            <form>
+                <div class="mb-3">
+                    <label for="negaraInput" class="form-label">Negara:</label>
+                    <input type="text" id="negaraInput" name="negaraInput" class="form-control"  placeholder="Contoh: SIN">
+                    <div id="suggestedCountries"></div>
+                </div>
+    
+                <div class="mb-3">
+                    <label for="pelabuhanInput" class="form-label">Pelabuhan:</label>
+                    <input type="text" id="pelabuhanInput" name="pelabuhanInput" class="form-control"  placeholder="Contoh: JUR">
+                </div>
+
+                <div class="mb-3">
+                    <label for="barangInput" class="form-label">Barang:</label>
+                    <input type="text" id="barangInput" name="barangInput" autocomplete="off" class="form-control" placeholder="Contoh: 10079000">
+                </div>
+
+                <div class="mb-3">
+                    <input type="text" id="baranglist" name="baranglist" autocomplete="off" class="form-control" style="width: 300px; height: 150px;">
+                </div>
+
+                <div class="mb-3">
+                    <label for="hargaInput" class="form-label">Harga:</label>
+                    <input type="text" id="hargaInput" name="hargaInput" class="form-control" autocomplete="off" placeholder="Contoh: 1000000">
+                </div>
+
+                <div class="mb-3">
+                    <label for="tarifInput">Tarif Bea Masuk (%):</label>
+                    <input type="text" id="tarifInput" name="tarifInput" class="form-control" autocomplete="off">
+                </div>
+
+                <div class="mb-3">
+                    <input type="text" id="tarifTotal" name="tarifTotal" class="form-control" autocomplete="off" placeholder="Total Bea Masuk">
+                </div>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script>
+    jQuery(document).ready(function ($) {
+        $("#negaraInput").autocomplete({
+            source: function (request, response) {
+                var searchTerm = request.term.toUpperCase();
+                var url = 'https://insw-dev.ilcs.co.id/n/negara?ur_negara=' + encodeURIComponent(searchTerm);
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        
+                        if (Array.isArray(data)) {
+                            response(data);
+                        } else {
+                            console.error('Format respons tidak sesuai. Data harus berupa array.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Gagal mendapatkan data dari server. Status:', status, 'Error:', error);
+                    }
+                });
+            },
+            minLength: 3,
+            autoFocus: true,
+            select: function (event, ui) {
+                $(this).val(ui.item.value);
+                return false;
+            }
+        });
+    });
+
+    jQuery(document).ready(function ($) {
+    $("#pelabuhanInput").autocomplete({
+        source: function (request, response) {
+            var negaraValue = $("#negaraInput").val().toUpperCase(); 
+            var searchTerm = request.term.toUpperCase();
+            var url = 'https://insw-dev.ilcs.co.id/n/pelabuhan?kd_negara=' + encodeURIComponent(negaraValue) + '&ur_pelabuhan=' + encodeURIComponent(searchTerm);
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    if (Array.isArray(data)) {
+                        response(data);
+                    } else {
+                        console.error('Format respons tidak sesuai. Data harus berupa array.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Gagal mendapatkan data dari server. Status:', status, 'Error:', error);
+                }
+            });
+        },
+        minLength: 3,
+        autoFocus: true,
+        select: function (event, ui) {
+            $(this).val(ui.item.value);
+            return false;
+        }
+    });
+});
+
+
+      $(document).ready(function () {
+    $("#barangInput").on("input", function () {
+    
+        $("#baranglist").val("");
+        
+            var urlExternal = 'https://insw-dev.ilcs.co.id/n/barang?hs_code=' + encodeURIComponent($(this).val());
+
+            $.ajax({
+                url: urlExternal,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    if (Array.isArray(data) && data.length > 0) {
+                        
+                        var concatenatedData = data.join(', ');
+                        $("#baranglist").val(concatenatedData);
+
+                    } else {
+                        console.error('Data yang diterima tidak sesuai atau kosong.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Gagal mendapatkan data dari server. Status:', status, 'Error:', error);
+                }
+            });
+        
+    });
+});
+
+
+
+      $(document).ready(function () {
+    $("#barangInput").on("input", function () {
+
+        $("#tarifInput").val("");
+            
+            var urlExternal = 'https://insw-dev.ilcs.co.id/n/tarif?hs_code=' + encodeURIComponent($(this).val());
+
+            $.ajax({
+                url: urlExternal,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    if (Array.isArray(data) && data.length > 0) {
+                        
+                        var concatenatedData = data.join(', ');
+                        $("#tarifInput").val(concatenatedData);
+
+                    } else {
+                        console.error('Data yang diterima tidak sesuai atau kosong.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Gagal mendapatkan data dari server. Status:', status, 'Error:', error);
+                }
+            });
+    });
+});
+
+
+    
+    document.addEventListener('DOMContentLoaded', function () {
+    var hargaInput = document.getElementById('hargaInput');
+    var tarifInput = document.getElementById('tarifInput');
+    var tarifTotalInput = document.getElementById('tarifTotal');
+
+    
+    hargaInput.addEventListener('input', updateTotal);
+    tarifInput.addEventListener('input', updateTotal);
+
+    function updateTotal() {
+    
+        var harga = parseFloat(hargaInput.value) || 0;
+        var tarif = parseFloat(tarifInput.value) || 0;
+
+    
+        var total = harga * (tarif / 100);
+        tarifTotalInput.value = total;
+    }
+});
+
+
+</script>
+</body>
+</html>
